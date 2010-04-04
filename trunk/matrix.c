@@ -12,7 +12,7 @@
 
 //matrix dimensions
 #define DIM_I 1000
-#define DIM_J 1200
+#define DIM_J 1000
 #define DIM_K 1000
 #define STEP 10
 //other stuff
@@ -77,5 +77,11 @@ int main (int argc, char *argv[])
   ntime = finish.tv_nsec - start.tv_nsec;
   stime = (long) finish.tv_sec - (long) start.tv_sec;
   total_time = (double) stime + ((double) ntime)/1e9;
-  printf("Time taken = %ds \n", total_time);
+  printf("Time taken = %lf \n", (double) stime + ((double) ntime)/1e9);
+/*  for (i = 0; i < DIM_I; i++){
+     for(j = 0; j < DIM_K; j++){
+         printf(" %lf", C[i][j]);}
+     printf("\n\r");
+  }
+*/
 }
