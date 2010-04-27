@@ -76,22 +76,81 @@ int main (int argc, char *argv[]){
   total_time = (double) stime + ((double) ntime)/1e9;
   printf("Time taken = %lf \n", (double) stime + ((double) ntime)/1e9);
 }
-/****************************************************************************
-* Note that all following functions only deal with square matrices 
-* where N is divisible by 2.
-*****************************************************************************/
+/*****************************************************************************
+ * Note that all following functions only deal with square matrices          *
+ * where N is divisible by 2.                                                *
+ *****************************************************************************/
 void addMatrices(double **x, double **y, double **z, int size){
 //performs a matrix addition operation, z=x+y
+	int i,j;
+	for (i = 0; i < size; i++)
+		for (j = 0; j < size; j++)
+			z[i][j] = x[i][j] + y[i][j];
 }
+
 void subMatrices(double **x, double **y, double **z, int size){
 //performs a matrix subtraction operation, z=x-y
+	int i,j;
+	for (i = 0; i < size; i++)
+		for (j = 0; j < size; j++)
+			z[i][j] = x[i][j] - y[i][j];
 }
+
 void splitMatrix(double **a, double**a11, **a12, **a21, **a22, int size){
 //takes a matrix a adn splits it into its 4 quadrants.
+	int i,j,x,y;
+	int newsize = (int)size/2;
+	x=0; y=0;
+	for (i = x; i < newsize+x; i++)
+		for (j = y; j < newsize+y; j++)
+			a11[i-x][j-y] = a[i][j];
+	x=newsize; y=0;
+	for (i = x; i < newsize+x; i++)
+		for (j = y; j < newsize+y; j++)
+			a12[i-x][j-y] = a[i][j];
+	x=0; y=newsize;
+	for (i = x; i < newsize+x; i++)
+		for (j = y; j < newsize+y; j++)
+			a21[i-x][j-y] = a[i][j];
+	x=newsize y=newsize;
+	for (i = x; i < newsize+x; i++)
+		for (j = y; j < newsize+y; j++)
+			a22[i-x][j-y] = a[i][j];
 }
+
 void catMatrix(double **a, double**a11, **a12, **a21, **a22, int size){
 //does the inverse of the splitMatrix function
+	int i,j,x,y;
+	int oldsize = (int)size/2;
+		x=0; y=0;
+	for (i = x; i < oldsize+x; i++)
+		for (j = y; j < oldsize+y; j++)
+			a[i][j] = a11[i-x][j-y];
+	x=oldsize; y=0;
+	for (i = x; i < oldsize+x; i++)
+		for (j = y; j < oldsize+y; j++)
+			a[i][j] = a12[i-x][j-y];
+	x=0; y=oldsize;
+	for (i = x; i < oldsize+x; i++)
+		for (j = y; j < oldsize+y; j++)
+			a[i][j] = a21[i-x][j-y];
+	x=oldsize y=oldsize;
+	for (i = x; i < oldsize+x; i++)
+		for (j = y; j < oldsize+y; j++)
+			a[i][j] = a22[i-x][j-y];
 }
+
 void multMatrix(double **x, double **y, double **z, int size){
 //multiplys two matrices: z=x*y
+	int i,j,k;
+	//clear the matrix
+	for (i = 0; i < size; i++)
+		for (i = 0; i < size; i++)
+			z[i][j] = 0.0;
+
+	//multiplication process
+	for (i = 0; i < size; i++)
+		for (j = 0; j < size; j++)
+			for (k = 0; k < size; k++)
+				z[i][j] += x[i][k] * y[k][j];
 }
