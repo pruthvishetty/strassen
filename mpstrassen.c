@@ -106,12 +106,13 @@ int main (int argc, char *argv[]){
 	{
 	  //multiplication process
     #pragma omp for schedule(dynamic) nowait
-	    for (j = 0; j < DIM_N; j++)
+	    for (j = 0; j < DIM_N; j++){
 		    for (i = 0; i < DIM_N; i++){
 		      C[i][j] = 0.0;
 			    for (k = 0; k < DIM_N; k++)
 				    C[i][j] += A[i][k] * B[k][j];
 				}
+		  }
 	}
   //normalMultMatrix(A,B,C,DIM_N);
 
