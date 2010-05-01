@@ -14,7 +14,7 @@ Compile options
 
 //matrix dimensions
 #define DIM_N 1024
-#define threads 1
+#define threads 2
 
 int chunk=10;
 
@@ -78,6 +78,7 @@ int main (int argc, char *argv[]){
   for (j = 0; j < DIM_N; j++)
     B[j][j] = 1.0 + B[j][j];
 
+  printf("Num Threads = %d\n",threads);
   //start timer
   clock_gettime(CLOCK_REALTIME,&start);
   
@@ -95,7 +96,7 @@ int main (int argc, char *argv[]){
   //calculate time taken
   ntime = finish.tv_nsec - start.tv_nsec;
   stime = (long) finish.tv_sec - (long) start.tv_sec;
-  printf("Strassen Time taken = %lf \n\n", (double) stime + ((double) ntime)/1e9);
+  printf("Strassen Time taken = %lf \n", (double) stime + ((double) ntime)/1e9);
   
   
 
@@ -262,7 +263,7 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
   double **t1, **t2, **t3, **t4, **t5, **t6, **t7, **t8, **t9, **t10;
   int newsize = (int)size/2;
   int i;
-  if (size > 64) {
+  if (size > 256) {
     //Allocate memory....this could get expensive pretty quickly
     a11 = (double**) malloc(sizeof(double)*newsize);
     a12 = (double**) malloc(sizeof(double)*newsize);
