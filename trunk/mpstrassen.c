@@ -14,7 +14,7 @@ Compile options
 
 //matrix dimensions
 #define DIM_N 1024
-
+#define threads 1
 
 int chunk=10;
 
@@ -102,7 +102,7 @@ int main (int argc, char *argv[]){
   //start timer
   clock_gettime(CLOCK_REALTIME,&start);
   
-  #pragma omp parallel shared(A,B,C,chunk) private(i,j,k) 
+  #pragma omp parallel shared(A,B,C,chunk) private(i,j,k) num_threads(threads)
 	{
 	  //multiplication process
     #pragma omp for schedule(dynamic) nowait
@@ -137,7 +137,7 @@ int main (int argc, char *argv[]){
 void addMatrices(double **x, double **y, double **z, int size){
 //performs a matrix addition operation, z=x+y
 	int i,j;
-	#pragma omp parallel shared(x,y,z,size,chunk) private(i,j) 
+	#pragma omp parallel shared(x,y,z,size,chunk) private(i,j) num_threads(threads) 
 	{
      #pragma omp for schedule(dynamic,chunk) nowait
 	      for (i = 0; i < size; i++)
@@ -149,7 +149,7 @@ void addMatrices(double **x, double **y, double **z, int size){
 void subMatrices(double **x, double **y, double **z, int size){
 //performs a matrix subtraction operation, z=x-y
 	int i,j;
-	#pragma omp parallel shared(x,y,z,size,chunk) private(i,j) 
+	#pragma omp parallel shared(x,y,z,size,chunk) private(i,j) num_threads(threads)
 	{
      #pragma omp for schedule(dynamic,chunk) nowait
 	      for (i = 0; i < size; i++)
@@ -163,7 +163,7 @@ void splitMatrix(double **a, double**a11,double **a12,double **a21,double **a22,
 	int i,j,x,y;
 	int newsize = (int)size/2;
 	x=0; y=0;
-	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,newsize,chunk) private(i,j) 
+	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,newsize,chunk) private(i,j) num_threads(threads)
 	{
     #pragma omp for schedule(dynamic,chunk) nowait
       for (i = x; i < newsize+x; i++)
@@ -171,7 +171,7 @@ void splitMatrix(double **a, double**a11,double **a12,double **a21,double **a22,
 		      a11[i-x][j-y] = a[i][j];
 	}
 	x=newsize; y=0;
-	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,newsize,chunk) private(i,j) 
+	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,newsize,chunk) private(i,j) num_threads(threads)
 	{
      #pragma omp for schedule(dynamic,chunk) nowait
 	      for (i = x; i < newsize+x; i++)
@@ -179,7 +179,7 @@ void splitMatrix(double **a, double**a11,double **a12,double **a21,double **a22,
 			      a12[i-x][j-y] = a[i][j];
 	}
 	x=0; y=newsize;
-	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,newsize,chunk) private(i,j) 
+	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,newsize,chunk) private(i,j) num_threads(threads)
 	{
     #pragma omp for schedule(dynamic,chunk) nowait
       for (i = x; i < newsize+x; i++)
@@ -187,7 +187,7 @@ void splitMatrix(double **a, double**a11,double **a12,double **a21,double **a22,
           a21[i-x][j-y] = a[i][j];
 	}
 	x=newsize; y=newsize;
-	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,newsize,chunk) private(i,j) 
+	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,newsize,chunk) private(i,j) num_threads(threads)
 	{
     #pragma omp for schedule(dynamic,chunk) nowait
       for (i = x; i < newsize+x; i++)
@@ -201,7 +201,7 @@ void catMatrix(double **a, double **a11,double **a12,double **a21,double **a22, 
 	int i,j,x,y;
 	int oldsize = (int)size/2;
   x=0; y=0;
-  #pragma omp parallel shared(a,a11,a12,a21,a22,x,y,oldsize,chunk) private(i,j) 
+  #pragma omp parallel shared(a,a11,a12,a21,a22,x,y,oldsize,chunk) private(i,j) num_threads(threads)
   {
     #pragma omp for schedule(dynamic,chunk) nowait
       for (i = x; i < oldsize+x; i++)
@@ -209,7 +209,7 @@ void catMatrix(double **a, double **a11,double **a12,double **a21,double **a22, 
           a[i][j] = a11[i-x][j-y];
 	}
 	x=oldsize; y=0;
-	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,oldsize,chunk) private(i,j) 
+	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,oldsize,chunk) private(i,j) num_threads(threads)
 	{
     #pragma omp for schedule(dynamic,chunk) nowait
       for (i = x; i < oldsize+x; i++)
@@ -217,7 +217,7 @@ void catMatrix(double **a, double **a11,double **a12,double **a21,double **a22, 
           a[i][j] = a12[i-x][j-y];
 	}
 	x=0; y=oldsize;
-	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,oldsize,chunk) private(i,j) 
+	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,oldsize,chunk) private(i,j) num_threads(threads)
 	{
     #pragma omp for schedule(dynamic,chunk) nowait
       for (i = x; i < oldsize+x; i++)
@@ -225,7 +225,7 @@ void catMatrix(double **a, double **a11,double **a12,double **a21,double **a22, 
           a[i][j] = a21[i-x][j-y];
 	}
 	x=oldsize; y=oldsize;
-	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,oldsize,chunk) private(i,j) 
+	#pragma omp parallel shared(a,a11,a12,a21,a22,x,y,oldsize,chunk) private(i,j) num_threads(threads)
 	{
     #pragma omp for schedule(dynamic,chunk) nowait
       for (i = x; i < oldsize+x; i++)
@@ -238,7 +238,7 @@ void normalMultMatrix(double **x, double **y, double **z, int size){
 //multiplys two matrices: z=x*y
 	int i,j,k;
 	
-	#pragma omp parallel shared(A,B,C,chunk) private(i,j,k) 
+	#pragma omp parallel shared(A,B,C,chunk) private(i,j,k) num_threads(threads)
 	{
 	  //multiplication process
     #pragma omp for schedule(dynamic) nowait
