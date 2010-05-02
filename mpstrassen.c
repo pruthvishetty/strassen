@@ -13,9 +13,9 @@ Compile options
 #include <sys/types.h>
 
 //matrix dimensions
-#define DIM_N 1024
-#define threads 2
-
+#define DIM_N 4096
+#define threads 1
+#define threshold 128
 int chunk=10;
 
 //other stuff
@@ -263,7 +263,7 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
   double **t1, **t2, **t3, **t4, **t5, **t6, **t7, **t8, **t9, **t10;
   int newsize = (int)size/2;
   int i;
-  if (size > 256) {
+  if (size > threshold) {
     //Allocate memory....this could get expensive pretty quickly
     a11 = (double**) malloc(sizeof(double)*newsize);
     a12 = (double**) malloc(sizeof(double)*newsize);
