@@ -19,9 +19,9 @@ Compile options
 /* DIM_N defines matix size, threads sets the openmp thread count      * 
  * threshold sets the lower limit for the strassen recursion algorithm *
  * chunk defines the openmp chunking size                              */
-#define DIM_N 8
+#define DIM_N 16
 #define threads 1
-#define threshold 1
+#define threshold 2
 int chunk=1;
 
 //other stuff
@@ -200,8 +200,8 @@ int main (int argc, char *argv[]){
     stime = MPI_Wtime();
     
     //strassen multiplication of one of the child multiplications
-    strassenMultMatrix(t1,t6,m1,newsize);
-    
+    //strassenMultMatrix(t1,t6,m1,newsize);
+    normalMultMatrix(t1,t6,m1,newsize);
     //Receive results from other nodes
     //printf("Mult done, receiving.... \n");
     for (i=0; i<newsize; i++){
@@ -256,6 +256,7 @@ int main (int argc, char *argv[]){
     
     //Strassen multiply
     strassenMultMatrix(t1,t2,t3,newsize);
+    //normalMultMatrix(t2,t1,t3,newsize);
     //printf("Mult done, sending back %d\n",myid);
     
     //transmit results to node 0
@@ -266,13 +267,13 @@ int main (int argc, char *argv[]){
     free(t1);free(t2);free(t3);
 	}
   //Print results
-  /*if(myid==0){
+  if(myid==0){
     for (i=0; i<DIM_N; i++){
       for (j=0; j<DIM_N; j++)
         printf("%lf ",C[i][j]);
       printf("\n");
     }
-  }*/
+  }
   if(myid == 0)
     printf("N = %d \tTime taken = %f \n", DIM_N, ntime-stime);
           
@@ -412,7 +413,7 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
   double **m1, **m2, **m3, **m4, **m5, **m6, **m7; 
   double **t1, **t2, **t3, **t4, **t5, **t6, **t7, **t8, **t9, **t10;
   int newsize = (int)size/2;
-  int i;
+  int i,j,k;
   
   //if above the threshold for strassen
   if (size > threshold) {
@@ -513,6 +514,7 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
     free(m1);free(m2);free(m3);free(m4);free(m5);free(m6);free(m7);
   }
   else {
-    normalMultMatrix(a,b,c,size);
+    normalMultMatrix(b,a,c,size);
   }
 }
+
