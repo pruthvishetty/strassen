@@ -19,9 +19,9 @@ Compile options
 /* DIM_N defines matix size, threads sets the openmp thread count      * 
  * threshold sets the lower limit for the strassen recursion algorithm *
  * chunk defines the openmp chunking size                              */
-#define DIM_N 8192
+#define DIM_N 16
 #define threads 1
-#define threshold 1024
+#define threshold 2
 int chunk=10;
 
 //other stuff
@@ -94,11 +94,11 @@ int main (int argc, char *argv[]){
   clock_gettime(CLOCK_REALTIME,&finish);
   
   //print out the result
-  /*for (i=0; i<DIM_N; i++){
+  for (i=0; i<DIM_N; i++){
     for (j=0; j<DIM_N; j++)
       printf("%lf ",C[i][j]);
     printf("\n");
-  }*/
+  }
 
   //calculate time taken
   ntime = finish.tv_nsec - start.tv_nsec;
@@ -364,6 +364,6 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
     free(m1);free(m2);free(m3);free(m4);free(m5);free(m6);free(m7);
   }
   else {
-    normalMultMatrix(a,b,c,size);
+    normalMultMatrix(b,a,c,size);
   }
 }
