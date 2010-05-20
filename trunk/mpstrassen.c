@@ -1,4 +1,7 @@
 /* 
+OpenMP version of the Strassen Matrix Multiplication Algorithm 
+James Mwaura, Honghao Tian
+
 Compile options
 	gcc -lrt -lm -fompenmp
 */
@@ -13,6 +16,9 @@ Compile options
 #include <sys/types.h>
 
 //matrix dimensions
+/* DIM_N defines matix size, threads sets the openmp thread count      * 
+ * threshold sets the lower limit for the strassen recursion algorithm *
+ * chunk defines the openmp chunking size                              */
 #define DIM_N 8192
 #define threads 1
 #define threshold 1024
@@ -23,7 +29,6 @@ double sum, snorm;
 double *d;
 
 //matrices
-//double A[DIM_N][DIM_N], B[DIM_N][DIM_N], C[DIM_N][DIM_N];
 double **A, **B, **C;
 
 //Prototypes
@@ -82,11 +87,13 @@ int main (int argc, char *argv[]){
   //start timer
   clock_gettime(CLOCK_REALTIME,&start);
   
+  //Strassen Multiplication
   strassenMultMatrix(A,B,C,DIM_N);
 
   //stop timer
   clock_gettime(CLOCK_REALTIME,&finish);
   
+  //print out the result
   /*for (i=0; i<DIM_N; i++){
     for (j=0; j<DIM_N; j++)
       printf("%lf ",C[i][j]);
@@ -99,7 +106,7 @@ int main (int argc, char *argv[]){
   printf("Strassen Time taken = %lf \n", (double) stime + ((double) ntime)/1e9);
   
   
-
+  /********Triple Loop Multiplication, with OpenMP, for Comparison**********/
   //start timer
   clock_gettime(CLOCK_REALTIME,&start);
   
@@ -358,6 +365,5 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
   }
   else {
     normalMultMatrix(a,b,c,size);
-    //c[0][0]=a[0][0]*b[0][0];
   }
 }
