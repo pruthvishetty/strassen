@@ -1,4 +1,7 @@
 /* 
+OpenMPI version of the Strassen Matrix multiplication algorithm 
+James Mwaura, Honghao Tian
+
 Compile options
 /usr/lib/openmpi/1.4-gcc/bin/mpicc -fopenmp
 /usr/lib/openmpi/1.4-gcc/bin/mpirun --mca btl tcp,self,sm --hostfile my_hostfile -np 7 a.out
@@ -11,13 +14,14 @@ Compile options
 #include <math.h>
 #include <time.h>
 #include <string.h>
-//#include <sys/time.h>
-//#include <sys/types.h>
 
 //matrix dimensions
-#define DIM_N 2048
-#define threads 4
-#define threshold 64
+/* DIM_N defines matix size, threads sets the openmp thread count      * 
+ * threshold sets the lower limit for the strassen recursion algorithm *
+ * chunk defines the openmp chunking size                              */
+#define DIM_N 8
+#define threads 1
+#define threshold 1
 int chunk=1;
 
 //other stuff
@@ -101,7 +105,9 @@ int main (int argc, char *argv[]){
 	  printf("Created the Matrices A and B\n");
 	}
 	
-	//create the initial distributions
+	//The MPI setup is a little different in that node 0 runs code thats
+	//different from the code run by other nodes. It has master transmit
+	//and receive operations as well.
 	if (myid == 0){
       //Allocate memory....this could get expensive pretty quickly
     a11 = (double**) malloc(sizeof(double)*newsize);
@@ -157,9 +163,10 @@ int main (int argc, char *argv[]){
       t9[i] = (double*) malloc(sizeof(double)*newsize);
       t10[i] = (double*) malloc(sizeof(double)*newsize);
     }
-  
-    splitMatrix(A,a11,a12,a21,a22,newsize);
-    splitMatrix(B,b11,b12,b21,b22,newsize);
+    
+    //The 1st strassen operation
+    splitMatrix(A,a11,a12,a21,a22,DIM_N);
+    splitMatrix(B,b11,b12,b21,b22,DIM_N);
     
     addMatrices(a11,a22,t1,newsize);
     addMatrices(a21,a22,t2,newsize);
@@ -172,6 +179,8 @@ int main (int argc, char *argv[]){
     addMatrices(b11,b12,t9,newsize);
     addMatrices(b21,b22,t10,newsize);
     printf("Sending....\n\n");
+    
+    //send 6 of the resulting 7 multiplications to other nodes to carry out
     for (i=0; i<newsize; i++){
       MPI_Send(t2[i],newsize,MPI_DOUBLE,1,0,MPI_COMM_WORLD);
       MPI_Send(b11[i],newsize,MPI_DOUBLE,1,1,MPI_COMM_WORLD);
@@ -190,9 +199,11 @@ int main (int argc, char *argv[]){
     //Start TimerMPI_COMM_WORLD
     stime = MPI_Wtime();
     
+    //strassen multiplication of one of the child multiplications
     strassenMultMatrix(t1,t6,m1,newsize);
     
-    printf("Mult done, receiving.... \n");
+    //Receive results from other nodes
+    //printf("Mult done, receiving.... \n");
     for (i=0; i<newsize; i++){
       MPI_Recv(m2[i],newsize,MPI_DOUBLE,1,1,MPI_COMM_WORLD,NULL);
       MPI_Recv(m3[i],newsize,MPI_DOUBLE,2,2,MPI_COMM_WORLD,NULL);
@@ -211,11 +222,12 @@ int main (int argc, char *argv[]){
     addMatrices(m2,m4,b21,newsize);
     subMatrices(a21,a22,b22,newsize);
     
-    catMatrix(C,b11,b12,b21,b22,newsize);
+    //Unsplit the matrix
+    catMatrix(C,b11,b12,b21,b22,DIM_N);
 
     //Stop Timer
     ntime =  MPI_Wtime();
-    
+    printf("DONE \n");
     free(a11);free(a12);free(a21);free(a22);
     free(b11);free(b12);free(b21);free(b22);
     free(t1);free(t2);free(t3);free(t4);free(t5);
@@ -223,6 +235,8 @@ int main (int argc, char *argv[]){
     free(m1);free(m2);free(m3);free(m4);free(m5);free(m6);free(m7);
 
 	} else if (myid>0 && myid<7){
+	  //for all other 6 nodes
+	  //allocate memory
 	  t1 = (double**) malloc(sizeof(double)*newsize);
     t2 = (double**) malloc(sizeof(double)*newsize);
     t3 = (double**) malloc(sizeof(double)*newsize);
@@ -231,25 +245,31 @@ int main (int argc, char *argv[]){
       t2[i] = (double*) malloc(sizeof(double)*newsize);
       t3[i] = (double*) malloc(sizeof(double)*newsize);
     }
+    
+    //receive respective matrices
     //printf("No %d Receiving....\n\n",myid);
     for (i=0; i < newsize; i++){
       MPI_Recv(t1[i],newsize,MPI_DOUBLE,0,0,MPI_COMM_WORLD,NULL);
       MPI_Recv(t2[i],newsize,MPI_DOUBLE,0,1,MPI_COMM_WORLD,NULL);
     }
     //printf("done receiving %d\n",myid);
+    
+    //Strassen multiply
     strassenMultMatrix(t1,t2,t3,newsize);
     //printf("Mult done, sending back %d\n",myid);
+    
+    //transmit results to node 0
     for (i=0; i < newsize; i++){
       MPI_Send(t3[i],newsize,MPI_DOUBLE,0,myid,MPI_COMM_WORLD);
     }
     //printf("done sending back %d\n",myid);
     free(t1);free(t2);free(t3);
 	}
-
+  //Print results
   /*if(myid==0){
     for (i=0; i<DIM_N; i++){
       for (j=0; j<DIM_N; j++)
-        printf("%lf ",B[i][j]);
+        printf("%lf ",C[i][j]);
       printf("\n");
     }
   }*/
@@ -393,6 +413,8 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
   double **t1, **t2, **t3, **t4, **t5, **t6, **t7, **t8, **t9, **t10;
   int newsize = (int)size/2;
   int i;
+  
+  //if above the threshold for strassen
   if (size > threshold) {
     //Allocate memory....this could get expensive pretty quickly
     a11 = (double**) malloc(sizeof(double)*newsize);
@@ -448,7 +470,8 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
       t9[i] = (double*) malloc(sizeof(double)*newsize);
       t10[i] = (double*) malloc(sizeof(double)*newsize);
     }
-
+    
+    //split the matrix
     splitMatrix(a,a11,a12,a21,a22,size);
     splitMatrix(b,b11,b12,b21,b22,size);
     
@@ -463,6 +486,7 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
     addMatrices(b11,b12,t9,newsize);
     addMatrices(b21,b22,t10,newsize);
     
+    //recurseive call to multiply the 7 child multiplications
     strassenMultMatrix(t1,t6,m1,newsize);
     strassenMultMatrix(t2,b11,m2,newsize);
     strassenMultMatrix(a11,t7,m3,newsize);
@@ -480,7 +504,9 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
     addMatrices(m2,m4,b21,newsize);
     subMatrices(a21,a22,b22,newsize);
     
+    //concatenate the matrix
     catMatrix(c,b11,b12,b21,b22,size);
+    
     free(a11);free(a12);free(a21);free(a22);
     free(b11);free(b12);free(b21);free(b22);
     free(t1);free(t2);free(t3);free(t4);free(t5);free(t6);free(t7);free(t8);free(t9);free(t10);
@@ -488,6 +514,5 @@ void strassenMultMatrix(double **a,double **b,double **c,int size){
   }
   else {
     normalMultMatrix(a,b,c,size);
-    //c[0][0]=a[0][0]*b[0][0];
   }
 }
