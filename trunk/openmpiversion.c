@@ -200,8 +200,8 @@ int main (int argc, char *argv[]){
     stime = MPI_Wtime();
     
     //strassen multiplication of one of the child multiplications
-    //strassenMultMatrix(t1,t6,m1,newsize);
-    normalMultMatrix(t1,t6,m1,newsize);
+    strassenMultMatrix(t1,t6,m1,newsize);
+    
     //Receive results from other nodes
     //printf("Mult done, receiving.... \n");
     for (i=0; i<newsize; i++){
@@ -256,7 +256,7 @@ int main (int argc, char *argv[]){
     
     //Strassen multiply
     strassenMultMatrix(t1,t2,t3,newsize);
-    //normalMultMatrix(t2,t1,t3,newsize);
+    
     //printf("Mult done, sending back %d\n",myid);
     
     //transmit results to node 0
